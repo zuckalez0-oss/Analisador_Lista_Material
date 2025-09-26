@@ -26,15 +26,29 @@ def convert_to_mm(dim_str):
     except (ValueError, ZeroDivisionError): return 0.0
     return total_mm
 
-def classificar_e_mapear_perfil(desc): #<----------------- Função principal de classificação
+# ==============================================================================
+# Função para identificar o tipo de perfil e retornar o código correto
+# ==============================================================================
+def classificar_e_mapear_perfil(desc):
     """Identifica o TIPO de perfil e retorna o código e uma chave de classificação."""
     desc_upper = desc.upper()
     if '[' in desc_upper or '][' in desc_upper: return 'U.s', 'PERFIL_U'
     if 'UENR' in desc_upper or 'IENR' in desc_upper or 'CART' in desc_upper or 'CA ' in desc_upper: return 'U.e', 'TERCA'
     if 'L DOBRADO' in desc_upper or desc_upper.startswith('L '): return 'L DOBRADO', 'CANTONEIRA'
-    if 'TUBO' in desc_upper or 'RED' in desc_upper: return 'RED', 'tubo redondo'  #< ----------- Cadastrar novos perfis 
+    
+    
+    # Se encontrar 'RED', mapeia para o código exato da planilha.
+    if 'RED' in desc_upper:
+        return 'FERRO MECANICO RED.', 'TUBO' # Mapeamento corrigido
+        
+    if 'TUBO' in desc_upper: return 'TUBO', 'TUBO' # Mantém genérico se for outra coisa
+    
     return 'N/D', 'OUTROS'
 
+
+# ==============================================================================
+# Extrai as 4 medidas principais de uma descrição de perfil
+# ==============================================================================
 def parse_dimensoes_inteligente(desc, tipo_perfil):
     """Aplica regras de extração de dimensões e retorna as 4 medidas principais."""
     a, b, c, esp = 0.0, 0.0, 0.0, 0.0
@@ -60,6 +74,13 @@ def parse_dimensoes_inteligente(desc, tipo_perfil):
             a = convert_to_mm(numeros_str_list[0])
             b = convert_to_mm(numeros_str_list[1])
             esp = convert_to_mm(numeros_str_list[2])
+    
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Lógica específica para Tubo/RED
+    elif tipo_perfil == 'TUBO':
+        # Para RED 12.7, a única medida é a espessura/diâmetro.
+        if len(numeros_str_list) >= 1:
+            esp = convert_to_mm(numeros_str_list[0]) # Coloca o valor na variável 'esp'
             
     return a, b, c, esp
 
@@ -139,10 +160,18 @@ def preencher_planilha_excel(caminho_planilha, dados_materiais):
                 _, tipo_perfil = classificar_e_mapear_perfil(perfil_desc)
                 dim_a, dim_b, dim_c, dim_esp = parse_dimensoes_inteligente(perfil_desc, tipo_perfil)
 
+                #PARA PERFIS NOVOS UTILIZAR ESSE BLOCO PARA CADASTRAR NOVOS PERFIS
+                if tipo_perfil in ['PERFIL_U', 'TERCA']:
+                    sheet.cell(row=linha_alvo, column=2).value = dim_a         # Coluna B -> Medida A
+                    sheet.cell(row=linha_alvo, column=4).value = dim_b         # Coluna D -> Medida B
+                    sheet.cell(row=linha_alvo, column=6).value = dim_c         # Coluna F -> Medida C
+
+                elif tipo_perfil == 'CANTONEIRA':                              # Preenche APENAS as colunas D e F para Cantoneiras
+                    sheet.cell(row=linha_alvo, column=4).value = dim_a         # Coluna D -> Medida A (CANTONEIRA)
+                    sheet.cell(row=linha_alvo, column=6).value = dim_b         # Coluna F -> Medida B (CANTONEIRA)
+
                 # --- MAPEAMENTO DE COLUNAS ---
-                sheet.cell(row=linha_alvo, column=2).value = dim_a         # Coluna B -> Medida A
-                sheet.cell(row=linha_alvo, column=4).value = dim_b         # Coluna D -> Medida B
-                sheet.cell(row=linha_alvo, column=6).value = dim_c         # Coluna F -> Medida C
+                
                 sheet.cell(row=linha_alvo, column=8).value = dim_esp       # Coluna H -> esp.
                 sheet.cell(row=linha_alvo, column=9).value = aco_tipo      # Coluna I -> Tipo de Material
                 sheet.cell(row=linha_alvo, column=10).value = l_total_m    # Coluna J -> Quantidade (m)
