@@ -8,7 +8,7 @@ from tkinter import filedialog, messagebox
 class DocxToExcelAutomator:
     def __init__(self, root):
         self.root = root
-        self.root.title("Inova Process - DOCX to Excel Automator")
+        self.root.title("Aut Lista de Material - DOCX to Excel Automator")
         self.root.geometry("500x200")
 
         self.file_path = tk.StringVar()
@@ -20,7 +20,7 @@ class DocxToExcelAutomator:
         file_frame.pack(pady=10, padx=10, fill=tk.X)
 
         # Label for file selection
-        self.label = tk.Label(file_frame, text="Select the Bill of Materials file (.docx):")
+        self.label = tk.Label(file_frame, text="Selecionar a Lista de Material! (.docx):")
         self.label.pack(anchor=tk.W)
 
         # Entry box for file path
@@ -32,7 +32,7 @@ class DocxToExcelAutomator:
         self.browse_button.pack(side=tk.RIGHT, padx=(5, 0))
 
         # Start Automation button
-        self.start_button = tk.Button(root, text="Start Automation", command=self.start_automation, font=("Helvetica", 12, "bold"))
+        self.start_button = tk.Button(root, text="Iniciar Script", command=self.start_automation, font=("Helvetica", 12, "bold"))
         self.start_button.pack(pady=20, padx=10, fill=tk.X, ipady=5)
 
         # Status label
